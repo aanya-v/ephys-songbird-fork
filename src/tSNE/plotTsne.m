@@ -41,9 +41,23 @@ function plotTsne(tsneResult, dimension, daysLabels, sylsLabels, colorBy)
 end
 
 function labelColors = assignColors(labels, uniqueLabels)
+    % Load the colormap from the .mat file
+    load('colorAlphabet.mat', 'colorAlphabet'); % Load the colormap from the .mat file
     numUniqueLabels = numel(uniqueLabels);
-    colors = turbo(numUniqueLabels);
+    colors = colorAlphabet(1:numUniqueLabels,:);
     labelColors = zeros(length(labels), 3);
+    
+    % Normalize daysLabels to [0, 1] range
+    daysNorm = (daysLabels - min(daysLabels)) / (max(daysLabels) - min(daysLabels));
+
+    % Create a color gradient for each point
+    colors = zeros(length(sylsLabels), 3);
+for i = 1:length(sylsLabels)
+    baseColor = colorMap(sylsLabels(i));
+    gradientFactor = daysNorm(i);
+    colors(i, :) = baseColor * gradientFactor;
+end
+
     for i = 1:numUniqueLabels
         labelColors(labels == uniqueLabels(i), :) = repmat(colors(i, :), sum(labels == uniqueLabels(i)), 1);
     end

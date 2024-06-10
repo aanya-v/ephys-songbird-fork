@@ -76,10 +76,12 @@ max_artifact_samples = 20; % Maximum allowable samples containing artifact, as l
 % respectively)
 
 max_intersyl_s = 1; % in s. of any inter-syllable intrevals within the sequence are greater than this the trial will be skipped.
-postmotor_cushion = .4; %extra time added to end of sequence in seconds
+postmotor_cushion = 0; %extra time added to end of sequence in seconds
 get_N_back_syls = 6; % tracks syllables and syllable times prior to SYLLABLE OR SEQUENCE entered
 get_N_forward_syls = 6; % same as above but following
-syl_or_seq = char(syl_or_seq);
+if length(char(syl_or_seq) ==1)
+    syl_or_seq = char(syl_or_seq);
+end
 max_trials = 1500;
 
  %% CREATE VARIABLES FOR OUTPUT FILE %%
@@ -279,11 +281,14 @@ end
         motif_spikes{3} = [all_motif_syl_onsets,all_motif_syl_offsets]; % sequence onsets and offsets for this trial
         
         recfilename(ct,1) = files(i,1);
-        syl_ons_offs(ct,:) = [all_motif_syl_onsets,all_motif_syl_offsets]; 
+        syl_ons_offs(ct,:) = all_motif_syl_onsets;
+        syl_offs(ct,:) = all_motif_syl_offsets; 
 
         neuralcase.recfilename(ct,1) = files(i,1);
-        neuralcase.syl_ons_offs(ct,:) = [all_motif_syl_onsets,all_motif_syl_offsets]; 
-        neuralcase.syl_ons_offs_intan(ct,:) = [all_motif_syl_onsets + t1_intan,all_motif_syl_offsets + t1_intan]; 
+        neuralcase.syl_ons(ct,:) = all_motif_syl_onsets;
+        neuralcase.syl_offs(ct,:) = all_motif_syl_offsets; 
+        neuralcase.syl_offs_intan(ct,:) = all_motif_syl_onsets + t1_intan;
+        neuraalcase.syl_offs_intan(ct,:) = all_motif_syl_offsets + t1_intan; 
 
         %assemble previous and next syllables into a string array. If there
         %is an intersection with the start or end of a file the array will
@@ -345,17 +350,17 @@ end
             motif_spikes{10} = t_assay_labelvec(seq_start(c):seq_end(c));
             motif_spikes{11} = spect_entropy_labelvec(seq_start(c):seq_end(c));
 
-            acoustics.weighted_avg_pitch(ct,1) = weighted_avg_labelvec(seq_start(c):seq_end(c));
-            acoustics.wiener_entropy(ct,1) = wiener_entropy_labelvec(seq_start(c):seq_end(c));
-            acoustics.amplitude(ct,1) = amp_at_pitchquant_labelvec(seq_start(c):seq_end(c));
-            acoustics.t_assay(ct,1) = t_assay_labelvec(seq_start(c):seq_end(c));
-            acoustics.spect_entropy(ct,1) = spect_entropy_labelvec(seq_start(c):seq_end(c));
+            acoustics.weighted_avg_pitch(ct,:) = weighted_avg_labelvec(seq_start(c):seq_end(c));
+            acoustics.wiener_entropy(ct,:) = wiener_entropy_labelvec(seq_start(c):seq_end(c));
+            acoustics.amplitude(ct,:) = amp_at_pitchquant_labelvec(seq_start(c):seq_end(c));
+            acoustics.t_assay(ct,:) = t_assay_labelvec(seq_start(c):seq_end(c));
+            acoustics.spect_entropy(ct,:) = spect_entropy_labelvec(seq_start(c):seq_end(c));
 
-            neuralcase.weighted_avg_pitch(ct,1) = weighted_avg_labelvec(seq_start(c):seq_end(c));
-            neuralcase.wiener_entropy(ct,1) = wiener_entropy_labelvec(seq_start(c):seq_end(c));
-            neuralcase.amplitude(ct,1) = amp_at_pitchquant_labelvec(seq_start(c):seq_end(c));
-            neuralcase.t_assay(ct,1) = t_assay_labelvec(seq_start(c):seq_end(c));
-            neuralcase.spect_entropy(ct,1) = spect_entropy_labelvec(seq_start(c):seq_end(c));
+            neuralcase.weighted_avg_pitch(ct,:) = weighted_avg_labelvec(seq_start(c):seq_end(c));
+            neuralcase.wiener_entropy(ct,:) = wiener_entropy_labelvec(seq_start(c):seq_end(c));
+            neuralcase.amplitude(ct,:) = amp_at_pitchquant_labelvec(seq_start(c):seq_end(c));
+            neuralcase.t_assay(ct,:) = t_assay_labelvec(seq_start(c):seq_end(c));
+            neuralcase.spect_entropy(ct,:) = spect_entropy_labelvec(seq_start(c):seq_end(c));
            
         else
             motif_spikes{7} = [];
@@ -368,8 +373,8 @@ end
         if exist('pitchContours','var')
             col = 12;
             motif_spikes{col} = pitchContours((seq_start(c):seq_end(c)));
-            acoustics.pitch_cont(ct,1) = pitchContours((seq_start(c):seq_end(c)));
-            neuralcase.pitch_cont(ct,1) = pitchContours((seq_start(c):seq_end(c)));
+            acoustics.pitch_cont(ct,:) = pitchContours((seq_start(c):seq_end(c)));
+            neuralcase.pitch_cont(ct,:) = pitchContours((seq_start(c):seq_end(c)));
         else
             col = 12;
             motif_spikes{col} = [];

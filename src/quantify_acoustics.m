@@ -251,7 +251,8 @@ while (1)
     onset_within_file = zeros(length(id));
     offset_within_file = zeros(length(id));
     syl_duration_within_file = zeros(length(id),1);
-    syl_wav_within_file = cell(length(id),1);    
+    syl_wav_within_file = cell(length(id),1);
+    syltable = cell(2,16);
 
     for x=1:length(id) %for each targeted syllable in file
 
