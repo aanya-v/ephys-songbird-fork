@@ -232,8 +232,8 @@ end
 if strcmp(bname,'pk180pu31')
     switch(syl)
         case 'f'  
-            f_cutoff=[700 2500];
-            t_assay=0.02;
+            f_cutoff=[1000 2500];
+            t_assay=30;
             spect_params=[0.8 10];     
         case 'a'  
             f_cutoff=[500 3500];
@@ -252,25 +252,8 @@ if strcmp(bname,'pk180pu31')
             t_assay=50;
             spect_params=[0.8 10];   
        case 'h'  
-            f_cutoff=[1000 2500];
-            t_assay=0.03;
-            spect_params=[0.8 10];  
-       case 'e'  
-            f_cutoff=[2000 4000];
-            t_assay=0.04;
-            spect_params=[0.8 10];  
-
-       case 'g'  
-            f_cutoff=[500 1200];
-            t_assay=0.03;
-            spect_params=[0.8 10];  
-       case 'j'  
-            f_cutoff=[1200 2500];
-            t_assay=0.01;
-            spect_params=[0.8 10];  
-       case 'x'  
-            f_cutoff=[1200 2500];
-            t_assay=0.03;
+            f_cutoff=[700 2500];
+            t_assay=50;
             spect_params=[0.8 10];   
     end
 end

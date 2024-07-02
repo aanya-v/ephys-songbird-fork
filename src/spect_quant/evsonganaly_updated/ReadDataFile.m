@@ -49,7 +49,7 @@ ext = lower(ext);
 
 if (strcmp(ext,'.wav'))
 	fullfname
-    [dat,fs]=wavread(fullfname);
+    [dat,fs]=audioread(fullfname);
     ISR=0;chan=0;
 elseif (strcmp(ext,'.ebin'))
     [dat,fs]=ReadEbinFile(fullfname);
@@ -61,13 +61,14 @@ elseif (strcmp(ext,'.filt'))
 elseif (strcmp(ext,'.mat'))
     load(fullfname);
     dat = transpose(board_adc_data);
-    %dat = highpass(dat,800,frequency_parameters.amplifier_sample_rate);
+    fs = frequency_parameters.amplifier_sample_rate; 
+    % dat = highpass(sound_dat,800,frequency_parameters.amplifier_sample_rate);
 elseif (strcmp(ext,'.rhd'))
     [fs,audio] = read_Intan_RHD2000_audio(fullfname);
     dat = transpose(audio);
     dat = highpass(dat,250,fs);
 else
-    [dat,fs]=wavread(fullfname);
+    [dat,fs]=audioread(fullfname);
     ext = '.wav';
     ISR=0;chan=0;
 end

@@ -112,9 +112,6 @@ disp(['This is for bird ' birdname])
 disp(['Window duration = ' num2str(spect_params(2)) ' msec, overlap = ' num2str(spect_params(1)),...
     ', assaying at t=' num2str(t_assay_original) ' with freq cutoff at [' num2str(f_cutoff) ']'])
 
-        f_lo = 500; f_hi = 10000;
-        f_cutoff_full = [f_lo f_hi];
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Main loop: load one file at a time, save some outputs back to the
 % original .not.mat file, and keep others to be saved in a single file
@@ -216,9 +213,6 @@ while (1)
         load(matname)
         rawsong = board_adc_data;
         Fs = frequency_parameters.amplifier_sample_rate;
-    elseif contains(filetype,'wav')
-        rawsong = audioread(cbin_fn);
-        Fs = 30000;
     else
         error('invalid filetype')
     end
@@ -251,8 +245,7 @@ while (1)
     onset_within_file = zeros(length(id));
     offset_within_file = zeros(length(id));
     syl_duration_within_file = zeros(length(id),1);
-    syl_wav_within_file = cell(length(id),1);
-    syltable = cell(2,16);
+    syl_wav_within_file = cell(length(id),1);    
 
     for x=1:length(id) %for each targeted syllable in file
 
@@ -401,9 +394,9 @@ while (1)
         wiener_entropy(ct,col)=wiener_entropy_tmp; % for summary file, column 1 is entropy for syllables in channel_with_song
         wiener_entropy_within_file(ct_within_each_file,col)=wiener_entropy_tmp; %for .not.mat file for this song
 
-        %  
-        % pitch_contours{ct} = pitchContours(id(x));
-        % pitch_contours_within_file{ct_within_each_file} = pitchContours(id(x));
+        % Extract Pitch Contours - derived from external function
+        pitch_contours{ct} = pitchContours(id(x));
+        pitch_contours_within_file{ct_within_each_file} = pitchContours(id(x));
        
         
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -428,30 +421,23 @@ while (1)
 %             hrminsec = strtok(cbin_fn(end-9:end),'.');
             timestamp = [yearmonthday,hrminsec,num2str(floor(1000*(on-floor(on))),'%03i')];
             t_out(ct)=str2num(timestamp); 
-        elseif contains(cbin_fn,'wav')
-            idx = strfind(cbin_fn,'_'); 
-            yearmonthday = cbin_fn(idx(1)+1:idx(2)-1); %after first "_" is the date
-            hrminsec = fn(idx(2)+1:idx(3)-1);
-            timestamp = [yearmonthday,hrminsec,num2str(floor(1000*(on-floor(on))),'%03i')];
-            t_out(ct)=str2num(timestamp); 
-            
         else
             
-            recdata=readrecf(rec_fn);
-            t_header_str=recdata.header{1};
-            space_id=find(t_header_str==' ');
-            t_str=t_header_str((space_id(end)+1):end);
-            hr=str2num(t_str(1:2));
-            minute=str2num(t_str(4:5));
-            second=str2num(t_str(7:8));
-            
-            %the exact time down to the millisecond when the syllable occurred.
-            %T_OUT format: YYYYMMDDHHmmSSSXXX Y=year, M=month, D=day, H=hour, m=minute, SSS = second (3 digits in case it was a very long file >100 seconds), XXX=milliseconds
-            timestamp = [num2str(year) num2str(month,'%02i') num2str(day,'%02i'),... %also from the .rec file
-                num2str(hr,'%02i') num2str(minute,'%02i') num2str(second + floor(on),'%03i'),... %3 digits for the second in case it is a very long file > 100 seconds
-                num2str(floor(1000*(on-floor(on))),'%03i')]; %this line finds # of milliseconds
-            timestamp = str2num(['uint64(' timestamp ')']); %convert to uint64 because it can store exact #s up to 20 digits. timestamp has 18 digits
-            t_out(ct)=timestamp; %used later to sort summary file data by time
+        recdata=readrecf(rec_fn);
+        t_header_str=recdata.header{1};
+        space_id=find(t_header_str==' ');
+        t_str=t_header_str((space_id(end)+1):end);
+        hr=str2num(t_str(1:2));
+        minute=str2num(t_str(4:5));
+        second=str2num(t_str(7:8));
+        
+        %the exact time down to the millisecond when the syllable occurred.
+        %T_OUT format: YYYYMMDDHHmmSSSXXX Y=year, M=month, D=day, H=hour, m=minute, SSS = second (3 digits in case it was a very long file >100 seconds), XXX=milliseconds
+        timestamp = [num2str(year) num2str(month,'%02i') num2str(day,'%02i'),... %also from the .rec file
+            num2str(hr,'%02i') num2str(minute,'%02i') num2str(second + floor(on),'%03i'),... %3 digits for the second in case it is a very long file > 100 seconds
+            num2str(floor(1000*(on-floor(on))),'%03i')]; %this line finds # of milliseconds
+        timestamp = str2num(['uint64(' timestamp ')']); %convert to uint64 because it can store exact #s up to 20 digits. timestamp has 18 digits
+        t_out(ct)=timestamp; %used later to sort summary file data by time
         end
         
         % TABULATE
@@ -475,7 +461,7 @@ while (1)
         syltable{ct,13} = amp_at_pitchquant_within_file(x);
         syltable{ct,14} = spect_entropy_within_file(x);
         syltable{ct,15} = wiener_entropy_within_file(x);
-        % syltable{ct,16} = pitch_contours_within_file(x);
+        syltable{ct,16} = pitch_contours_within_file(x);
         
         ct=ct+1;
         ct_within_each_file=ct_within_each_file+1;
@@ -556,7 +542,7 @@ while (1)
     eval(sprintf('f_cutoff_pitch_syl_%s = f_cutoff;', syl)); %frequency range for pitch & pitch contours quant
     eval(sprintf('f_cutoff_syl_%s = f_cutoff_full;', syl)); %frequency range for spect/wiener entropy & amp quant
     eval(sprintf('t_assay_syl_%s = t_assay_original;', syl));
-    % eval(sprintf('t_assay_amp_syl_%s = t_assay_amp;', syl));
+    eval(sprintf('t_assay_amp_syl_%s = t_assay_amp;', syl));
     eval(sprintf('spect_params_syl_%s = spect_params;', syl));
     eval(sprintf('syl_dur_%s = syl_dur;',syl));
 
@@ -580,8 +566,8 @@ while (1)
         "'F1_save_allfreqs_labelvec','P1_save_labelvec','F1_save_labelvec',",...
         "'peak_pinterp_labelvec','weighted_avg_labelvec','amp_at_pitchquant_labelvec',",...
         "'spect_entropy_labelvec','wiener_entropy_labelvec','t_assay_labelvec',",...
-        "'f_cutoff_pitch_syl_%s','f_cutoff_syl_%s','t_assay_syl_%s',",...
-        "'spect_params_syl_%s','syl_dur_%s','-append')"),fn, syl,syl,syl, syl, syl));
+        "'f_cutoff_pitch_syl_%s','f_cutoff_syl_%s','t_assay_syl_%s','t_assay_amp_syl_%s',",...
+        "'spect_params_syl_%s','syl_dur_%s','-append')"),fn, syl,syl,syl, syl, syl,syl));
 
     % Cleaning up so that new variables don't carry over when next file is added
     clear P1_save_allfreqs_labelvec F1_save_allfreqs_labelvec P1_save_labelvec F1_save_labelvec
@@ -650,7 +636,7 @@ disp(['Saving summary file: ' summary_fn '.mat']);
 syl_sum = cell2table(syltable,'VariableNames',{'recname','label_idx',...
     'syllable','onset_offset','syl_dur','f_cutoff','f_cutoff_full',...
     'amp_sm_window','spect_params','t_assay','peak_pinterp','weighted_avg','amp_at_pitchquant',...
-    'spect_entropy','wiener_entropy'});
+    'spect_entropy','wiener_entropy','pitch_contours'});
 
 % Sort all variables by t_out, so that for example peak_pinterp(1,:)
 % corresponds to the earliest targeted syllable in directory,
@@ -708,7 +694,7 @@ t_assay = t_assay_original; %save the t_assay variable as the original t_assay n
 %contents of myfile.mat replace the contents of MYFILE.mat, but the name remains MYFILE.mat."
 eval(sprintf(['save(''%s'',''P1_save_allfreqs'',''F1_save_allfreqs'',''P1_save'',''F1_save'',',...
     '''peak_pinterp'',''weighted_avg'',''amp_at_pitchquant'',''spect_entropy'',''wiener_entropy'',',...
-    '''fname_arr'',''t_out'',''save_T1'','...
+    '''fname_arr'',''t_out'',''save_T1'',''pitch_contours'','...
     '''spect_params'',''f_cutoff'',''f_cutoff_full'',''t_assay'',''t_assay_amp'',''birdname'',''syl_sum'')'],summary_fn));
 
 end %end of function headphones_quantify_pitch
